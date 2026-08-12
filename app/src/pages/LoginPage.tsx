@@ -21,36 +21,42 @@ export function LoginPage() {
   }
 
   return (
-    <div>
-      <h1>Entrar</h1>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="login-email">E-mail</label>
-        <input
-          id="login-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+    <div className="page">
+      <div className="card">
+        <h1>Entrar</h1>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="login-email">E-mail</label>
+          <input
+            id="login-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <label htmlFor="login-password">Senha</label>
-        <input
-          id="login-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          <label htmlFor="login-password">Senha</label>
+          <input
+            id="login-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        {error && <p role="alert">{error}</p>}
+          {error && (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          )}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
-      <p>
-        Não tem conta? <Link to="/signup">Criar conta</Link>
-      </p>
+          <button type="submit" className="button button-primary" disabled={submitting}>
+            {submitting ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+        <p className="footnote">
+          Não tem conta? <Link to="/signup">Criar conta</Link>
+        </p>
+      </div>
     </div>
   )
 }

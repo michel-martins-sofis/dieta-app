@@ -27,38 +27,48 @@ export function SignupPage() {
   }
 
   return (
-    <div>
-      <h1>Criar conta</h1>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="signup-email">E-mail</label>
-        <input
-          id="signup-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+    <div className="page">
+      <div className="card">
+        <h1>Criar conta</h1>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="signup-email">E-mail</label>
+          <input
+            id="signup-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <label htmlFor="signup-password">Senha</label>
-        <input
-          id="signup-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
+          <label htmlFor="signup-password">Senha</label>
+          <input
+            id="signup-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
 
-        {error && <p role="alert">{error}</p>}
-        {notice && <p role="status">{notice}</p>}
+          {error && (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p role="status" className="notice">
+              {notice}
+            </p>
+          )}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Criando conta...' : 'Criar conta'}
-        </button>
-      </form>
-      <p>
-        Já tem conta? <Link to="/login">Entrar</Link>
-      </p>
+          <button type="submit" className="button button-primary" disabled={submitting}>
+            {submitting ? 'Criando conta...' : 'Criar conta'}
+          </button>
+        </form>
+        <p className="footnote">
+          Já tem conta? <Link to="/login">Entrar</Link>
+        </p>
+      </div>
     </div>
   )
 }

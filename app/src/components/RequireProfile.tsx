@@ -6,11 +6,15 @@ export function RequireProfile({ children }: { children: ReactNode }) {
   const { profile, loading, error } = useProfile()
 
   if (loading) {
-    return <p>Carregando...</p>
+    return <p className="loading">Carregando...</p>
   }
 
   if (error) {
-    return <p role="alert">Não foi possível carregar seu perfil. Tente recarregar a página.</p>
+    return (
+      <p role="alert" className="loading alert">
+        Não foi possível carregar seu perfil. Tente recarregar a página.
+      </p>
+    )
   }
 
   if (!profile) {

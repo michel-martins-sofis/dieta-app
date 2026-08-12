@@ -92,67 +92,77 @@ export function ProfilePage() {
   }
 
   if (loading || !initialized) {
-    return <p>Carregando...</p>
+    return <p className="loading">Carregando...</p>
   }
 
   return (
-    <div>
-      <h1>Seu perfil</h1>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="profile-age">Idade</label>
-        <input id="profile-age" type="number" value={age} onChange={(e) => setAge(e.target.value)} required min={1} />
+    <div className="page">
+      <div className="card card--wide">
+        <h1>Seu perfil</h1>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="profile-age">Idade</label>
+          <input id="profile-age" type="number" value={age} onChange={(e) => setAge(e.target.value)} required min={1} />
 
-        <label htmlFor="profile-weight">Peso (kg)</label>
-        <input id="profile-weight" type="number" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} required min={1} step="0.1" />
+          <label htmlFor="profile-weight">Peso (kg)</label>
+          <input id="profile-weight" type="number" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} required min={1} step="0.1" />
 
-        <label htmlFor="profile-height">Altura (cm)</label>
-        <input id="profile-height" type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} required min={1} />
+          <label htmlFor="profile-height">Altura (cm)</label>
+          <input id="profile-height" type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} required min={1} />
 
-        <label htmlFor="profile-sex">Sexo biológico</label>
-        <select id="profile-sex" value={sex} onChange={(e) => setSex(e.target.value as Sex)}>
-          <option value="female">Feminino</option>
-          <option value="male">Masculino</option>
-        </select>
+          <label htmlFor="profile-sex">Sexo biológico</label>
+          <select id="profile-sex" value={sex} onChange={(e) => setSex(e.target.value as Sex)}>
+            <option value="female">Feminino</option>
+            <option value="male">Masculino</option>
+          </select>
 
-        <label htmlFor="profile-activity">Nível de atividade física</label>
-        <select id="profile-activity" value={activityLevel} onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)}>
-          <option value="sedentary">Sedentário</option>
-          <option value="light">Leve (1-3x/semana)</option>
-          <option value="moderate">Moderado (3-5x/semana)</option>
-          <option value="active">Ativo (6-7x/semana)</option>
-          <option value="very_active">Muito ativo</option>
-        </select>
+          <label htmlFor="profile-activity">Nível de atividade física</label>
+          <select id="profile-activity" value={activityLevel} onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)}>
+            <option value="sedentary">Sedentário</option>
+            <option value="light">Leve (1-3x/semana)</option>
+            <option value="moderate">Moderado (3-5x/semana)</option>
+            <option value="active">Ativo (6-7x/semana)</option>
+            <option value="very_active">Muito ativo</option>
+          </select>
 
-        <label htmlFor="profile-goal">Objetivo</label>
-        <select id="profile-goal" value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>
-          <option value="lose_weight">Perda de peso</option>
-          <option value="gain_muscle">Ganho de massa muscular</option>
-          <option value="maintain">Manutenção/saúde geral</option>
-        </select>
+          <label htmlFor="profile-goal">Objetivo</label>
+          <select id="profile-goal" value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>
+            <option value="lose_weight">Perda de peso</option>
+            <option value="gain_muscle">Ganho de massa muscular</option>
+            <option value="maintain">Manutenção/saúde geral</option>
+          </select>
 
-        <button type="button" onClick={handleCalculate}>
-          Calcular meta sugerida
-        </button>
+          <button type="button" className="button button-secondary" onClick={handleCalculate}>
+            Calcular meta sugerida
+          </button>
 
-        <label htmlFor="profile-calories">Calorias (kcal/dia)</label>
-        <input id="profile-calories" type="number" value={calories} onChange={(e) => setCalories(e.target.value)} required min={1} />
+          <label htmlFor="profile-calories">Calorias (kcal/dia)</label>
+          <input id="profile-calories" type="number" value={calories} onChange={(e) => setCalories(e.target.value)} required min={1} />
 
-        <label htmlFor="profile-protein">Proteína (g/dia)</label>
-        <input id="profile-protein" type="number" value={proteinG} onChange={(e) => setProteinG(e.target.value)} required min={0} />
+          <label htmlFor="profile-protein">Proteína (g/dia)</label>
+          <input id="profile-protein" type="number" value={proteinG} onChange={(e) => setProteinG(e.target.value)} required min={0} />
 
-        <label htmlFor="profile-carb">Carboidrato (g/dia)</label>
-        <input id="profile-carb" type="number" value={carbG} onChange={(e) => setCarbG(e.target.value)} required min={0} />
+          <label htmlFor="profile-carb">Carboidrato (g/dia)</label>
+          <input id="profile-carb" type="number" value={carbG} onChange={(e) => setCarbG(e.target.value)} required min={0} />
 
-        <label htmlFor="profile-fat">Gordura (g/dia)</label>
-        <input id="profile-fat" type="number" value={fatG} onChange={(e) => setFatG(e.target.value)} required min={0} />
+          <label htmlFor="profile-fat">Gordura (g/dia)</label>
+          <input id="profile-fat" type="number" value={fatG} onChange={(e) => setFatG(e.target.value)} required min={0} />
 
-        {error && <p role="alert">{error}</p>}
-        {notice && <p role="status">{notice}</p>}
+          {error && (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p role="status" className="notice">
+              {notice}
+            </p>
+          )}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Salvando...' : 'Salvar perfil'}
-        </button>
-      </form>
+          <button type="submit" className="button button-primary" disabled={submitting}>
+            {submitting ? 'Salvando...' : 'Salvar perfil'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
