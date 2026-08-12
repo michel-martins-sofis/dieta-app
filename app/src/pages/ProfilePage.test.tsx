@@ -1,23 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { ProfilePage } from './ProfilePage'
 
 const mockSaveProfile = vi.fn()
 const mockUseProfile = vi.fn()
+const mockNavigate = vi.fn()
 
 vi.mock('../contexts/ProfileContext', () => ({
   useProfile: () => mockUseProfile(),
 }))
 
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
+
 describe('ProfilePage', () => {
   beforeEach(() => {
     mockSaveProfile.mockReset()
+    mockNavigate.mockReset()
     mockUseProfile.mockReset().mockReturnValue({ profile: null, saveProfile: mockSaveProfile })
   })
 
   it('calculates suggested targets from the entered profile data', async () => {
-    render(<ProfilePage />)
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
     await userEvent.type(screen.getByLabelText('Idade'), '30')
     await userEvent.type(screen.getByLabelText('Peso (kg)'), '80')
     await userEvent.type(screen.getByLabelText('Altura (cm)'), '180')
@@ -32,9 +44,13 @@ describe('ProfilePage', () => {
     expect(screen.getByLabelText('Proteína (g/dia)')).toHaveValue(Math.round(1.6 * 80))
   })
 
-  it('saves the profile with the entered and calculated values', async () => {
+  it('creates a new profile and navigates to /dashboard', async () => {
     mockSaveProfile.mockResolvedValue({ error: null })
-    render(<ProfilePage />)
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
     await userEvent.type(screen.getByLabelText('Idade'), '30')
     await userEvent.type(screen.getByLabelText('Peso (kg)'), '80')
     await userEvent.type(screen.getByLabelText('Altura (cm)'), '180')
@@ -44,16 +60,50 @@ describe('ProfilePage', () => {
     expect(mockSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({ age: 30, weightKg: 80, heightCm: 180 })
     )
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('shows an update notice instead of navigating when editing an existing profile', async () => {
+    mockUseProfile.mockReturnValue({
+      profile: {
+        age: 30,
+        weightKg: 80,
+        heightCm: 180,
+        sex: 'male',
+        activityLevel: 'sedentary',
+        goal: 'maintain',
+        dailyCaloriesTarget: 2000,
+        dailyProteinG: 120,
+        dailyCarbG: 200,
+        dailyFatG: 60,
+      },
+      saveProfile: mockSaveProfile,
+    })
+    mockSaveProfile.mockResolvedValue({ error: null })
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
+    await userEvent.click(screen.getByRole('button', { name: /salvar perfil/i }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Perfil atualizado.')
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it('shows an error message when saving fails', async () => {
     mockSaveProfile.mockResolvedValue({ error: 'Falha ao salvar' })
-    render(<ProfilePage />)
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
     await userEvent.type(screen.getByLabelText('Idade'), '30')
     await userEvent.type(screen.getByLabelText('Peso (kg)'), '80')
     await userEvent.type(screen.getByLabelText('Altura (cm)'), '180')
     await userEvent.click(screen.getByRole('button', { name: /calcular meta sugerida/i }))
     await userEvent.click(screen.getByRole('button', { name: /salvar perfil/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Falha ao salvar')
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 })

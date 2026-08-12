@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../contexts/ProfileContext'
 import { calculateNutritionGoals, type ActivityLevel, type Goal, type Sex } from '../lib/nutritionGoals'
 
 export function ProfilePage() {
   const { profile, saveProfile } = useProfile()
+  const navigate = useNavigate()
+  const isEditing = profile !== null
   const [age, setAge] = useState(profile ? String(profile.age) : '')
   const [weightKg, setWeightKg] = useState(profile ? String(profile.weightKg) : '')
   const [heightCm, setHeightCm] = useState(profile ? String(profile.heightCm) : '')
@@ -15,6 +18,7 @@ export function ProfilePage() {
   const [carbG, setCarbG] = useState(profile ? String(profile.dailyCarbG) : '')
   const [fatG, setFatG] = useState(profile ? String(profile.dailyFatG) : '')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   function handleCalculate() {
@@ -44,6 +48,7 @@ export function ProfilePage() {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
+    setNotice(null)
     const { error: saveError } = await saveProfile({
       age: Number(age),
       weightKg: Number(weightKg),
@@ -59,6 +64,12 @@ export function ProfilePage() {
     setSubmitting(false)
     if (saveError) {
       setError(saveError)
+      return
+    }
+    if (isEditing) {
+      setNotice('Perfil atualizado.')
+    } else {
+      navigate('/dashboard')
     }
   }
 
@@ -114,6 +125,7 @@ export function ProfilePage() {
         <input id="profile-fat" type="number" value={fatG} onChange={(e) => setFatG(e.target.value)} required min={0} />
 
         {error && <p role="alert">{error}</p>}
+        {notice && <p role="status">{notice}</p>}
 
         <button type="submit" disabled={submitting}>
           {submitting ? 'Salvando...' : 'Salvar perfil'}
