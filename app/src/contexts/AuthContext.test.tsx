@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider, useAuth } from './AuthContext'
 
@@ -37,10 +37,6 @@ describe('AuthContext', () => {
     mockGetSession.mockReset().mockResolvedValue({ data: { session: null } })
     mockOnAuthStateChange.mockReset().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
     mockSignInWithPassword.mockReset().mockResolvedValue({ error: null })
-  })
-
-  afterEach(() => {
-    cleanup()
   })
 
   it('starts loading, then resolves to no user when there is no session', async () => {
