@@ -146,10 +146,50 @@ a {
   color: var(--color-text);
 }
 
+.form-field select {
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.card form select,
+.form-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235b6472' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  transition: border-color 0.15s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card form select,
+  .form-field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239aa4b6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
+.card form select:hover,
+.form-field select:hover {
+  border-color: var(--gradient-mid);
+}
+
 .card form input:focus,
-.card form select:focus {
+.card form select:focus,
+.form-field select:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
+}
+
+.form-section + .form-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Buttons */
@@ -241,6 +281,45 @@ a {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.25rem;
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.top-bar-actions .button {
+  margin-top: 0;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.form-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.back-link:hover {
+  color: var(--gradient-mid);
 }
 
 .top-bar h1 {

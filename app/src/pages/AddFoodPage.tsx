@@ -1,16 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useFoodEntries, type MealType } from '../contexts/FoodEntriesContext'
+import { Link, useNavigate } from 'react-router-dom'
+import { useFoodEntries, MEAL_LABELS, type MealType } from '../contexts/FoodEntriesContext'
 import { useFavorites, type Favorite } from '../contexts/FavoritesContext'
 import { searchFoods, type FoodSearchResult } from '../lib/foodsApi'
 import { scaleByGrams } from '../lib/foodPortion'
-
-const MEAL_LABELS: Record<MealType, string> = {
-  breakfast: 'Café da manhã',
-  lunch: 'Almoço',
-  dinner: 'Jantar',
-  snack: 'Lanche',
-}
 
 type Mode = 'search' | 'manual' | 'favorites'
 
@@ -83,7 +76,7 @@ export function AddFoodPage() {
       setError(addError)
       return
     }
-    navigate('/dashboard')
+    navigate('/diario')
   }
 
   async function handleManualSubmit(event: FormEvent) {
@@ -105,7 +98,7 @@ export function AddFoodPage() {
     if (saveAsFavorite) {
       await addFavorite(entry)
     }
-    navigate('/dashboard')
+    navigate('/diario')
   }
 
   async function handleAddFavorite(favorite: Favorite) {
@@ -122,22 +115,27 @@ export function AddFoodPage() {
       setError(addError)
       return
     }
-    navigate('/dashboard')
+    navigate('/diario')
   }
 
   return (
     <div className="page">
       <div className="card card--wide">
+        <Link to="/diario" className="back-link">
+          ← Voltar
+        </Link>
         <h1>Adicionar alimento</h1>
 
-        <label htmlFor="add-food-meal">Refeição</label>
-        <select id="add-food-meal" value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
-          {Object.entries(MEAL_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <div className="form-field">
+          <label htmlFor="add-food-meal">Refeição</label>
+          <select id="add-food-meal" value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
+            {Object.entries(MEAL_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="tab-bar" role="tablist">
           {Object.entries(MODE_LABELS).map(([value, label]) => (

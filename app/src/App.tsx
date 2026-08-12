@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { AddFoodPage } from './pages/AddFoodPage'
+import { FoodLogPage } from './pages/FoodLogPage'
 
 export function App() {
   return (
@@ -58,6 +59,16 @@ export function App() {
                     <ProtectedRoute>
                       <RequireProfile>
                         <DashboardPage />
+                      </RequireProfile>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/diario"
+                  element={
+                    <ProtectedRoute>
+                      <RequireProfile>
+                        <FoodLogPage />
                       </RequireProfile>
                     </ProtectedRoute>
                   }

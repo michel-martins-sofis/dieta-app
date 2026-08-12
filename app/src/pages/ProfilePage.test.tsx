@@ -35,6 +35,16 @@ describe('ProfilePage', () => {
     expect(screen.queryByLabelText('Idade')).not.toBeInTheDocument()
   })
 
+  it('shows personal data and nutrition goals as separate sections', () => {
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { name: 'Dados pessoais' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Metas nutricionais' })).toBeInTheDocument()
+  })
+
   it('calculates suggested targets from the entered profile data', async () => {
     render(
       <MemoryRouter>

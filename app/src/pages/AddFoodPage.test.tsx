@@ -11,9 +11,10 @@ const mockUseFavorites = vi.fn()
 const mockSearchFoods = vi.fn()
 const mockNavigate = vi.fn()
 
-vi.mock('../contexts/FoodEntriesContext', () => ({
-  useFoodEntries: () => mockUseFoodEntries(),
-}))
+vi.mock('../contexts/FoodEntriesContext', async () => {
+  const actual = await vi.importActual<typeof import('../contexts/FoodEntriesContext')>('../contexts/FoodEntriesContext')
+  return { ...actual, useFoodEntries: () => mockUseFoodEntries() }
+})
 
 vi.mock('../contexts/FavoritesContext', () => ({
   useFavorites: () => mockUseFavorites(),
@@ -64,7 +65,7 @@ describe('AddFoodPage', () => {
         proteinG: 5.2,
       })
     )
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
+    expect(mockNavigate).toHaveBeenCalledWith('/diario')
   })
 
   it('adds a manual entry and optionally saves it as a favorite', async () => {
@@ -111,6 +112,6 @@ describe('AddFoodPage', () => {
     expect(mockAddEntry).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Vitamina de banana', caloriesKcal: 250 })
     )
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
+    expect(mockNavigate).toHaveBeenCalledWith('/diario')
   })
 })

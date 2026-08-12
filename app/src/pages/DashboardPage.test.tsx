@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { DashboardPage } from './DashboardPage'
 
@@ -52,7 +51,7 @@ describe('DashboardPage', () => {
     expect(screen.queryByText(/consumido vs/i)).not.toBeInTheDocument()
   })
 
-  it('shows today\'s food entries with consumed totals', () => {
+  it('reflects consumed totals from food entries in the goal cards', () => {
     mockUseFoodEntries.mockReturnValue({
       entries: [
         { id: 1, mealType: 'breakfast', name: 'Café com leite', caloriesKcal: 120, proteinG: 6, carbG: 12, fatG: 4 },
@@ -65,31 +64,16 @@ describe('DashboardPage', () => {
         <DashboardPage />
       </MemoryRouter>
     )
-    expect(screen.getByText('Café com leite')).toBeInTheDocument()
-    expect(screen.getByText('Arroz e feijão')).toBeInTheDocument()
     expect(screen.getByText(/520.*2500 kcal/)).toBeInTheDocument()
   })
 
-  it('shows a message when there are no entries yet', () => {
+  it('links to the food diary page instead of listing entries inline', () => {
     render(
       <MemoryRouter>
         <DashboardPage />
       </MemoryRouter>
     )
-    expect(screen.getByText(/nenhum alimento registrado/i)).toBeInTheDocument()
-  })
-
-  it('removes an entry when Remover is clicked', async () => {
-    mockUseFoodEntries.mockReturnValue({
-      entries: [{ id: 1, mealType: 'breakfast', name: 'Café com leite', caloriesKcal: 120, proteinG: 6, carbG: 12, fatG: 4 }],
-      removeEntry: mockRemoveEntry,
-    })
-    render(
-      <MemoryRouter>
-        <DashboardPage />
-      </MemoryRouter>
-    )
-    await userEvent.click(screen.getByRole('button', { name: /remover/i }))
-    expect(mockRemoveEntry).toHaveBeenCalledWith(1)
+    expect(screen.getByRole('link', { name: /ver diário/i })).toHaveAttribute('href', '/diario')
+    expect(screen.queryByRole('button', { name: /remover/i })).not.toBeInTheDocument()
   })
 })

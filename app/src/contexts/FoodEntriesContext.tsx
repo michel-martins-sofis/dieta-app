@@ -4,6 +4,13 @@ import { useAuth } from './AuthContext'
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
+export const MEAL_LABELS: Record<MealType, string> = {
+  breakfast: 'Café da manhã',
+  lunch: 'Almoço',
+  dinner: 'Jantar',
+  snack: 'Lanche',
+}
+
 export interface FoodEntry {
   id: number
   mealType: MealType
