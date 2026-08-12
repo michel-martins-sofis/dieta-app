@@ -21,7 +21,18 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     mockSaveProfile.mockReset()
     mockNavigate.mockReset()
-    mockUseProfile.mockReset().mockReturnValue({ profile: null, saveProfile: mockSaveProfile })
+    mockUseProfile.mockReset().mockReturnValue({ profile: null, loading: false, saveProfile: mockSaveProfile })
+  })
+
+  it('shows a loading message while the profile is still resolving', () => {
+    mockUseProfile.mockReturnValue({ profile: null, loading: true, saveProfile: mockSaveProfile })
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
+    expect(screen.getByText(/carregando/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Idade')).not.toBeInTheDocument()
   })
 
   it('calculates suggested targets from the entered profile data', async () => {
@@ -63,7 +74,7 @@ describe('ProfilePage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
   })
 
-  it('shows an update notice instead of navigating when editing an existing profile', async () => {
+  it('pre-fills the form and shows an update notice instead of navigating when editing an existing profile', async () => {
     mockUseProfile.mockReturnValue({
       profile: {
         age: 30,
@@ -77,6 +88,7 @@ describe('ProfilePage', () => {
         dailyCarbG: 200,
         dailyFatG: 60,
       },
+      loading: false,
       saveProfile: mockSaveProfile,
     })
     mockSaveProfile.mockResolvedValue({ error: null })
@@ -85,6 +97,10 @@ describe('ProfilePage', () => {
         <ProfilePage />
       </MemoryRouter>
     )
+
+    expect(screen.getByLabelText('Idade')).toHaveValue(30)
+    expect(screen.getByLabelText('Calorias (kcal/dia)')).toHaveValue(2000)
+
     await userEvent.click(screen.getByRole('button', { name: /salvar perfil/i }))
 
     expect(await screen.findByRole('status')).toHaveTextContent('Perfil atualizado.')

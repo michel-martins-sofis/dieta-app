@@ -47,6 +47,7 @@ interface ProfileRow {
 interface ProfileContextValue {
   profile: Profile | null
   loading: boolean
+  error: string | null
   saveProfile: (input: ProfileInput) => Promise<{ error: string | null }>
 }
 
@@ -69,13 +70,21 @@ function fromRow(row: ProfileRow): Profile {
 }
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const userId = user?.id ?? null
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) {
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
+
+    if (!userId) {
       setProfile(null)
+      setError(null)
       setLoading(false)
       return
     }
@@ -85,15 +94,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     const fetchProfile = async () => {
       try {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+        const { data, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle()
         if (ignore) return
+        if (fetchError) {
+          setError(fetchError.message)
+          setProfile(null)
+          return
+        }
+        setError(null)
         setProfile(data ? fromRow(data as ProfileRow) : null)
-      } catch {
+      } catch (err) {
         if (ignore) return
+        setError(err instanceof Error ? err.message : 'Falha ao carregar perfil.')
         setProfile(null)
       } finally {
-        if (ignore) return
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
 
@@ -102,18 +121,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return () => {
       ignore = true
     }
-  }, [user])
+  }, [authLoading, userId])
 
   const saveProfile = useCallback(
     async (input: ProfileInput) => {
-      if (!user) {
+      if (!userId) {
         return { error: 'Não autenticado.' }
       }
 
-      const { data, error } = await supabase
+      const { data, error: saveError } = await supabase
         .from('profiles')
         .upsert({
-          id: user.id,
+          id: userId,
           age: input.age,
           weight_kg: input.weightKg,
           height_cm: input.heightCm,
@@ -128,19 +147,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .select()
         .single()
 
-      if (error) {
-        return { error: error.message }
+      if (saveError) {
+        return { error: saveError.message }
       }
 
       setProfile(fromRow(data as ProfileRow))
+      setError(null)
       return { error: null }
     },
-    [user]
+    [userId]
   )
 
   const value = useMemo<ProfileContextValue>(
-    () => ({ profile, loading, saveProfile }),
-    [profile, loading, saveProfile]
+    () => ({ profile, loading, error, saveProfile }),
+    [profile, loading, error, saveProfile]
   )
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>

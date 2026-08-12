@@ -1,25 +1,43 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../contexts/ProfileContext'
 import { calculateNutritionGoals, type ActivityLevel, type Goal, type Sex } from '../lib/nutritionGoals'
 
 export function ProfilePage() {
-  const { profile, saveProfile } = useProfile()
+  const { profile, loading, saveProfile } = useProfile()
   const navigate = useNavigate()
   const isEditing = profile !== null
-  const [age, setAge] = useState(profile ? String(profile.age) : '')
-  const [weightKg, setWeightKg] = useState(profile ? String(profile.weightKg) : '')
-  const [heightCm, setHeightCm] = useState(profile ? String(profile.heightCm) : '')
-  const [sex, setSex] = useState<Sex>(profile?.sex ?? 'female')
-  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(profile?.activityLevel ?? 'sedentary')
-  const [goal, setGoal] = useState<Goal>(profile?.goal ?? 'maintain')
-  const [calories, setCalories] = useState(profile ? String(profile.dailyCaloriesTarget) : '')
-  const [proteinG, setProteinG] = useState(profile ? String(profile.dailyProteinG) : '')
-  const [carbG, setCarbG] = useState(profile ? String(profile.dailyCarbG) : '')
-  const [fatG, setFatG] = useState(profile ? String(profile.dailyFatG) : '')
+  const [initialized, setInitialized] = useState(false)
+  const [age, setAge] = useState('')
+  const [weightKg, setWeightKg] = useState('')
+  const [heightCm, setHeightCm] = useState('')
+  const [sex, setSex] = useState<Sex>('female')
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>('sedentary')
+  const [goal, setGoal] = useState<Goal>('maintain')
+  const [calories, setCalories] = useState('')
+  const [proteinG, setProteinG] = useState('')
+  const [carbG, setCarbG] = useState('')
+  const [fatG, setFatG] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (loading || initialized) return
+    if (profile) {
+      setAge(String(profile.age))
+      setWeightKg(String(profile.weightKg))
+      setHeightCm(String(profile.heightCm))
+      setSex(profile.sex)
+      setActivityLevel(profile.activityLevel)
+      setGoal(profile.goal)
+      setCalories(String(profile.dailyCaloriesTarget))
+      setProteinG(String(profile.dailyProteinG))
+      setCarbG(String(profile.dailyCarbG))
+      setFatG(String(profile.dailyFatG))
+    }
+    setInitialized(true)
+  }, [loading, profile, initialized])
 
   function handleCalculate() {
     const parsedAge = Number(age)
@@ -71,6 +89,10 @@ export function ProfilePage() {
     } else {
       navigate('/dashboard')
     }
+  }
+
+  if (loading || !initialized) {
+    return <p>Carregando...</p>
   }
 
   return (

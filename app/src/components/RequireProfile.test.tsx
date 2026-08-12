@@ -49,4 +49,10 @@ describe('RequireProfile', () => {
     renderWithRoute()
     expect(screen.getByText('painel')).toBeInTheDocument()
   })
+
+  it('shows an error message when the profile failed to load', () => {
+    mockUseProfile.mockReturnValue({ profile: null, loading: false, error: 'falha ao carregar' })
+    renderWithRoute()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
 })

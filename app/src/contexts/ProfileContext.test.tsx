@@ -86,7 +86,7 @@ function TestConsumer() {
 describe('ProfileContext', () => {
   beforeEach(() => {
     mockFrom.mockReset().mockImplementation(() => buildChain())
-    mockUseAuth.mockReset().mockReturnValue({ user: { id: 'user-1' } })
+    mockUseAuth.mockReset().mockReturnValue({ user: { id: 'user-1' }, loading: false })
     mockMaybeSingle.mockReset().mockResolvedValue({ data: PROFILE_ROW, error: null })
     mockSingle.mockReset().mockResolvedValue({ data: { ...PROFILE_ROW, daily_calories_target: 2600 }, error: null })
   })
@@ -103,7 +103,7 @@ describe('ProfileContext', () => {
   })
 
   it('has no profile and stops loading when there is no user', async () => {
-    mockUseAuth.mockReturnValue({ user: null })
+    mockUseAuth.mockReturnValue({ user: null, loading: false })
     render(
       <ProfileProvider>
         <TestConsumer />
@@ -111,6 +111,17 @@ describe('ProfileContext', () => {
     )
     await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
     expect(screen.getByTestId('calories').textContent).toBe('none')
+  })
+
+  it('stays loading while auth is still resolving, and does not fetch prematurely', () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: true })
+    render(
+      <ProfileProvider>
+        <TestConsumer />
+      </ProfileProvider>
+    )
+    expect(screen.getByTestId('loading').textContent).toBe('true')
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 
   it('saves the profile via upsert and updates state', async () => {
@@ -125,5 +136,27 @@ describe('ProfileContext', () => {
     expect(mockUpsert).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'user-1', daily_calories_target: 2600 })
     )
+  })
+
+  it('surfaces a fetch error instead of silently treating it as "no profile"', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'db unavailable' } })
+
+    function ErrorConsumer() {
+      const { loading, error } = useProfile()
+      return (
+        <div>
+          <span data-testid="loading">{String(loading)}</span>
+          <span data-testid="error">{error ?? 'none'}</span>
+        </div>
+      )
+    }
+
+    render(
+      <ProfileProvider>
+        <ErrorConsumer />
+      </ProfileProvider>
+    )
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
+    expect(screen.getByTestId('error').textContent).toBe('db unavailable')
   })
 })
