@@ -5,25 +5,18 @@ import { MemoryRouter } from 'react-router-dom'
 import { SignupPage } from './SignupPage'
 
 const mockSignUp = vi.fn()
-const mockNavigate = vi.fn()
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ signUp: mockSignUp }),
 }))
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
-  return { ...actual, useNavigate: () => mockNavigate }
-})
-
 describe('SignupPage', () => {
   beforeEach(() => {
     mockSignUp.mockReset()
-    mockNavigate.mockReset()
   })
 
-  it('submits email and password and navigates to /dashboard on success', async () => {
-    mockSignUp.mockResolvedValue({ error: null })
+  it('submits email and password and shows no error or notice when a session is returned', async () => {
+    mockSignUp.mockResolvedValue({ error: null, session: { user: { email: 'test@example.com' } } })
     render(
       <MemoryRouter>
         <SignupPage />
@@ -33,11 +26,25 @@ describe('SignupPage', () => {
     await userEvent.type(screen.getByLabelText('Senha'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: /criar conta/i }))
     expect(mockSignUp).toHaveBeenCalledWith('test@example.com', 'password123')
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('shows a confirmation notice when signup succeeds without a session', async () => {
+    mockSignUp.mockResolvedValue({ error: null, session: null })
+    render(
+      <MemoryRouter>
+        <SignupPage />
+      </MemoryRouter>
+    )
+    await userEvent.type(screen.getByLabelText('E-mail'), 'test@example.com')
+    await userEvent.type(screen.getByLabelText('Senha'), 'password123')
+    await userEvent.click(screen.getByRole('button', { name: /criar conta/i }))
+    expect(await screen.findByRole('status')).toHaveTextContent(/verifique seu e-mail/i)
   })
 
   it('shows an error message when signup fails', async () => {
-    mockSignUp.mockResolvedValue({ error: 'Email already registered' })
+    mockSignUp.mockResolvedValue({ error: 'Email already registered', session: null })
     render(
       <MemoryRouter>
         <SignupPage />
@@ -47,6 +54,5 @@ describe('SignupPage', () => {
     await userEvent.type(screen.getByLabelText('Senha'), 'password123')
     await userEvent.click(screen.getByRole('button', { name: /criar conta/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Email already registered')
-    expect(mockNavigate).not.toHaveBeenCalled()
   })
 })

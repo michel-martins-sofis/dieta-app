@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 
@@ -6,7 +6,7 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string) => Promise<{ error: string | null; session: Session | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
@@ -18,40 +18,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    let ignoreInitialSession = false
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (ignoreInitialSession) return
+        setSession(data.session)
+      })
+      .catch(() => {
+        if (ignoreInitialSession) return
+        setSession(null)
+      })
+      .finally(() => {
+        if (ignoreInitialSession) return
+        setLoading(false)
+      })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      ignoreInitialSession = true
+      setSession(newSession)
       setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession)
-    })
-
-    return () => listener.subscription.unsubscribe()
+    return () => {
+      ignoreInitialSession = true
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
-  async function signUp(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password })
-    return { error: error ? error.message : null }
-  }
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    return { error: error ? error.message : null, session: data.session }
+  }, [])
 
-  async function signIn(email: string, password: string) {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error ? error.message : null }
-  }
+  }, [])
 
-  async function signOut() {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut()
-  }
+  }, [])
 
-  const value: AuthContextValue = {
-    user: session?.user ?? null,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-  }
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: session?.user ?? null,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+    }),
+    [session, loading, signUp, signIn, signOut]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

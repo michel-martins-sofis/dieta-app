@@ -1,26 +1,29 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export function SignupPage() {
   const { signUp } = useAuth()
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
-    const { error: signUpError } = await signUp(email, password)
+    setNotice(null)
+    const { error: signUpError, session } = await signUp(email, password)
     setSubmitting(false)
     if (signUpError) {
       setError(signUpError)
       return
     }
-    navigate('/dashboard')
+    if (!session) {
+      setNotice('Conta criada! Verifique seu e-mail para confirmar antes de entrar.')
+    }
   }
 
   return (
@@ -30,7 +33,6 @@ export function SignupPage() {
         <label htmlFor="signup-email">E-mail</label>
         <input
           id="signup-email"
-          aria-label="E-mail"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -40,7 +42,6 @@ export function SignupPage() {
         <label htmlFor="signup-password">Senha</label>
         <input
           id="signup-password"
-          aria-label="Senha"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -49,6 +50,7 @@ export function SignupPage() {
         />
 
         {error && <p role="alert">{error}</p>}
+        {notice && <p role="status">{notice}</p>}
 
         <button type="submit" disabled={submitting}>
           {submitting ? 'Criando conta...' : 'Criar conta'}

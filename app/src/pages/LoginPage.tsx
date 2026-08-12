@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export function LoginPage() {
   const { signIn } = useAuth()
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -18,9 +17,7 @@ export function LoginPage() {
     setSubmitting(false)
     if (signInError) {
       setError(signInError)
-      return
     }
-    navigate('/dashboard')
   }
 
   return (
@@ -30,7 +27,6 @@ export function LoginPage() {
         <label htmlFor="login-email">E-mail</label>
         <input
           id="login-email"
-          aria-label="E-mail"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -40,7 +36,6 @@ export function LoginPage() {
         <label htmlFor="login-password">Senha</label>
         <input
           id="login-password"
-          aria-label="Senha"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
