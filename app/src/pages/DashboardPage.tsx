@@ -25,6 +25,11 @@ export function DashboardPage() {
     { caloriesKcal: 0, proteinG: 0, carbG: 0, fatG: 0 }
   )
 
+  function progressPercent(consumed: number, target: number): number {
+    if (!target) return 0
+    return Math.min(100, Math.round((consumed / target) * 100))
+  }
+
   return (
     <div className="page">
       <div className="card card--wide">
@@ -45,24 +50,48 @@ export function DashboardPage() {
                   {totals.caloriesKcal} / {profile.dailyCaloriesTarget} kcal
                 </strong>
                 <span>Calorias</span>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPercent(totals.caloriesKcal, profile.dailyCaloriesTarget)}%` }}
+                  />
+                </div>
               </div>
               <div className="goal-stat">
                 <strong>
                   {totals.proteinG} / {profile.dailyProteinG} g
                 </strong>
                 <span>Proteína</span>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPercent(totals.proteinG, profile.dailyProteinG)}%` }}
+                  />
+                </div>
               </div>
               <div className="goal-stat">
                 <strong>
                   {totals.carbG} / {profile.dailyCarbG} g
                 </strong>
                 <span>Carboidrato</span>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPercent(totals.carbG, profile.dailyCarbG)}%` }}
+                  />
+                </div>
               </div>
               <div className="goal-stat">
                 <strong>
                   {totals.fatG} / {profile.dailyFatG} g
                 </strong>
                 <span>Gordura</span>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPercent(totals.fatG, profile.dailyFatG)}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
