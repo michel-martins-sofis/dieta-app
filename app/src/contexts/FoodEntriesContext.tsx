@@ -30,6 +30,11 @@ export interface FoodEntryInput {
   fatG: number
 }
 
+export interface DailyCalorieTotal {
+  date: string
+  caloriesKcal: number
+}
+
 interface FoodEntryRow {
   id: number
   meal_type: MealType
@@ -47,6 +52,7 @@ interface FoodEntriesContextValue {
   addEntry: (input: FoodEntryInput) => Promise<{ error: string | null }>
   removeEntry: (id: number) => Promise<{ error: string | null }>
   fetchEntriesByDate: (date: string) => Promise<{ entries: FoodEntry[]; error: string | null }>
+  fetchDailyCalorieTotals: (days: number) => Promise<{ totals: DailyCalorieTotal[]; error: string | null }>
 }
 
 const FoodEntriesContext = createContext<FoodEntriesContextValue | undefined>(undefined)
@@ -65,6 +71,20 @@ function fromRow(row: FoodEntryRow): FoodEntry {
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10)
+}
+
+function daysAgoDateString(days: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return date.toISOString().slice(0, 10)
+}
+
+function buildDateRange(days: number): string[] {
+  const dates: string[] = []
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    dates.push(daysAgoDateString(offset))
+  }
+  return dates
 }
 
 export function FoodEntriesProvider({ children }: { children: ReactNode }) {
@@ -193,9 +213,40 @@ export function FoodEntriesProvider({ children }: { children: ReactNode }) {
     [userId]
   )
 
+  const fetchDailyCalorieTotals = useCallback(
+    async (days: number) => {
+      if (!userId) {
+        return { totals: [], error: 'Não autenticado.' }
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from('food_entries')
+        .select('logged_date, calories_kcal')
+        .eq('user_id', userId)
+        .gte('logged_date', daysAgoDateString(days - 1))
+
+      if (fetchError) {
+        return { totals: [], error: fetchError.message }
+      }
+
+      const totalsByDate = new Map<string, number>()
+      for (const row of data as { logged_date: string; calories_kcal: number }[]) {
+        totalsByDate.set(row.logged_date, (totalsByDate.get(row.logged_date) ?? 0) + row.calories_kcal)
+      }
+
+      const totals = buildDateRange(days).map((date) => ({
+        date,
+        caloriesKcal: totalsByDate.get(date) ?? 0,
+      }))
+
+      return { totals, error: null }
+    },
+    [userId]
+  )
+
   const value = useMemo<FoodEntriesContextValue>(
-    () => ({ entries, loading, error, addEntry, removeEntry, fetchEntriesByDate }),
-    [entries, loading, error, addEntry, removeEntry, fetchEntriesByDate]
+    () => ({ entries, loading, error, addEntry, removeEntry, fetchEntriesByDate, fetchDailyCalorieTotals }),
+    [entries, loading, error, addEntry, removeEntry, fetchEntriesByDate, fetchDailyCalorieTotals]
   )
 
   return <FoodEntriesContext.Provider value={value}>{children}</FoodEntriesContext.Provider>

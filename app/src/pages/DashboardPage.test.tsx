@@ -76,4 +76,13 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('link', { name: /ver diário/i })).toHaveAttribute('href', '/diario')
     expect(screen.queryByRole('button', { name: /remover/i })).not.toBeInTheDocument()
   })
+
+  it('links to the history page', () => {
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('link', { name: /ver histórico/i })).toHaveAttribute('href', '/historico')
+  })
 })

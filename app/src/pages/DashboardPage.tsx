@@ -99,6 +99,13 @@ export function DashboardPage() {
             Ver diário
           </Link>
         </div>
+
+        <div className="top-bar">
+          <h2>Histórico</h2>
+          <Link to="/historico" style={{ textDecoration: 'none' }} className="button button-secondary">
+            Ver histórico
+          </Link>
+        </div>
       </div>
     </div>
   )

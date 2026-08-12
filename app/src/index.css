@@ -25,33 +25,38 @@
   font: 16px/1.5 var(--font);
   color: var(--color-text);
   background: var(--color-bg);
-  color-scheme: light dark;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --gradient-start: #34d399;
-    --gradient-mid: #60a5fa;
-    --gradient-end: #a78bfa;
-    --gradient-soft: linear-gradient(135deg, #05130f 0%, #071426 50%, #150c2b 100%);
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
 
-    --color-bg: #0e1117;
-    --color-surface: #171b24;
-    --color-text: #e7ebf3;
-    --color-text-muted: #9aa4b6;
-    --color-border: #2a2f3b;
-    --color-primary: #60a5fa;
-    --color-primary-contrast: #071018;
-    --color-danger: #ff8a80;
-    --color-danger-bg: #3a1f1d;
-    --color-info: #8ec9ec;
-    --color-info-bg: #16283a;
-    --color-track: #232838;
-    --shadow:
-      0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(96, 165, 250, 0.22);
-  }
+/* Dark theme applies only when explicitly chosen via the theme toggle
+   (data-theme="dark"), never automatically from the OS preference — the
+   app defaults to the light theme regardless of prefers-color-scheme. */
+:root[data-theme='dark'] {
+  --gradient-start: #34d399;
+  --gradient-mid: #60a5fa;
+  --gradient-end: #a78bfa;
+  --gradient-soft: linear-gradient(135deg, #05130f 0%, #071426 50%, #150c2b 100%);
+
+  --color-bg: #0e1117;
+  --color-surface: #171b24;
+  --color-text: #e7ebf3;
+  --color-text-muted: #9aa4b6;
+  --color-border: #2a2f3b;
+  --color-primary: #60a5fa;
+  --color-primary-contrast: #071018;
+  --color-danger: #ff8a80;
+  --color-danger-bg: #3a1f1d;
+  --color-info: #8ec9ec;
+  --color-info-bg: #16283a;
+  --color-track: #232838;
+  --shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(96, 165, 250, 0.22);
 }
 
 * {
@@ -168,11 +173,9 @@ a {
   transition: border-color 0.15s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .card form select,
-  .form-field select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239aa4b6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
+:root[data-theme='dark'] .card form select,
+:root[data-theme='dark'] .form-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239aa4b6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .card form select:hover,
@@ -552,4 +555,154 @@ a {
     max-height: 22rem;
     overflow-y: auto;
   }
+}
+
+/* Theme toggle */
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  font-size: 1.15rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--gradient-mid);
+}
+
+/* Charts */
+
+.chart-wrapper {
+  position: relative;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart-gridline {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  font-size: 10px;
+  fill: var(--color-text-muted);
+}
+
+.chart-area {
+  fill: var(--gradient-mid);
+  opacity: 0.1;
+  stroke: none;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--gradient-mid);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-dot {
+  fill: var(--gradient-mid);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.chart-hit-area {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.chart-hit-area:focus-visible,
+.chart-bar:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.chart-bar {
+  fill: var(--gradient-start);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.chart-bar:hover,
+.chart-bar--active {
+  filter: brightness(1.12);
+}
+
+.chart-target-line {
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: -0.25rem;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  background: var(--color-text);
+  color: var(--color-surface);
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+  z-index: 1;
+}
+
+.chart-tooltip strong {
+  font-size: 0.85rem;
+}
+
+.chart-tooltip span {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.chart-table-toggle {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.chart-table-toggle summary {
+  cursor: pointer;
+}
+
+.chart-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.chart-table th,
+.chart-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
 }

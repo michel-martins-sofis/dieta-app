@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FoodEntriesProvider, useFoodEntries } from './FoodEntriesContext'
+import { FoodEntriesProvider, useFoodEntries, todayDateString } from './FoodEntriesContext'
 
 const mockUseAuth = vi.fn()
 const mockFrom = vi.fn()
 const mockSelect = vi.fn()
 const mockEq = vi.fn()
 const mockOrder = vi.fn()
+const mockGte = vi.fn()
 const mockInsert = vi.fn()
 const mockInsertSelect = vi.fn()
 const mockSingle = vi.fn()
@@ -36,6 +37,7 @@ function buildSelectChain() {
       return chain
     },
     order: (...args: unknown[]) => mockOrder(...args),
+    gte: (...args: unknown[]) => mockGte(...args),
     insert: (...args: unknown[]) => {
       mockInsert(...args)
       return {
@@ -64,8 +66,9 @@ const ENTRY_ROW = {
 }
 
 function TestConsumer() {
-  const { entries, loading, addEntry, removeEntry, fetchEntriesByDate } = useFoodEntries()
+  const { entries, loading, addEntry, removeEntry, fetchEntriesByDate, fetchDailyCalorieTotals } = useFoodEntries()
   const [historyCount, setHistoryCount] = useState<number | null>(null)
+  const [totalsSummary, setTotalsSummary] = useState<string | null>(null)
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
@@ -98,6 +101,15 @@ function TestConsumer() {
       >
         buscar-2026-08-01
       </button>
+      <span data-testid="totals-summary">{totalsSummary ?? 'none'}</span>
+      <button
+        onClick={async () => {
+          const { totals } = await fetchDailyCalorieTotals(3)
+          setTotalsSummary(totals.map((t) => `${t.date}:${t.caloriesKcal}`).join(','))
+        }}
+      >
+        totais-3-dias
+      </button>
     </div>
   )
 }
@@ -112,6 +124,7 @@ describe('FoodEntriesContext', () => {
       error: null,
     })
     mockDeleteEq.mockReset().mockResolvedValue({ error: null })
+    mockGte.mockReset().mockResolvedValue({ data: [], error: null })
   })
 
   it('loads today\'s entries for the current user', async () => {
@@ -176,5 +189,31 @@ describe('FoodEntriesContext', () => {
     await waitFor(() => expect(screen.getByTestId('history-count').textContent).toBe('2'))
     expect(mockEq).toHaveBeenCalledWith('logged_date', '2026-08-01')
     expect(screen.getByTestId('count').textContent).toBe('1')
+  })
+
+  it('aggregates daily calorie totals over a date range, filling days with no entries as zero', async () => {
+    const today = todayDateString()
+    const yesterday = new Date(`${today}T00:00:00`)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().slice(0, 10)
+
+    mockGte.mockResolvedValue({
+      data: [
+        { logged_date: yesterdayStr, calories_kcal: 300 },
+        { logged_date: yesterdayStr, calories_kcal: 150 },
+      ],
+      error: null,
+    })
+    render(
+      <FoodEntriesProvider>
+        <TestConsumer />
+      </FoodEntriesProvider>
+    )
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
+    await userEvent.click(screen.getByText('totais-3-dias'))
+    await waitFor(() =>
+      expect(screen.getByTestId('totals-summary').textContent).toContain(`${yesterdayStr}:450`)
+    )
+    expect(screen.getByTestId('totals-summary').textContent).toContain(`${today}:0`)
   })
 })
