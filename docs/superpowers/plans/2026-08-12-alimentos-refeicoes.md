@@ -1130,11 +1130,12 @@ describe('AddFoodPage', () => {
       </MemoryRouter>
     )
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Manual' }))
     await userEvent.type(screen.getByLabelText('Nome'), 'Omelete')
     await userEvent.type(screen.getByLabelText('Calorias (kcal)'), '300')
     await userEvent.type(screen.getByLabelText('Proteína (g)'), '20')
     await userEvent.click(screen.getByLabelText(/salvar como favorito/i))
-    await userEvent.click(screen.getByRole('button', { name: /^adicionar$/i, hidden: true }))
+    await userEvent.click(screen.getByRole('button', { name: /^adicionar$/i }))
 
     expect(mockAddEntry).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Omelete', caloriesKcal: 300, proteinG: 20 })
@@ -1157,6 +1158,7 @@ describe('AddFoodPage', () => {
       </MemoryRouter>
     )
 
+    await userEvent.click(screen.getByRole('tab', { name: 'Favoritos' }))
     await userEvent.click(screen.getByText(/Vitamina de banana/))
 
     expect(mockAddEntry).toHaveBeenCalledWith(
@@ -1166,6 +1168,8 @@ describe('AddFoodPage', () => {
   })
 })
 ```
+
+Nota: a tela usa um menu de abas (**Buscar / Manual / Favoritos**) — só uma seção fica visível por vez (mais simples que mostrar as três empilhadas), por isso os testes de "Manual" e "Favoritos" clicam na aba correspondente antes de interagir com os campos daquela seção.
 
 - [ ] **Step 2: Rodar os testes e confirmar que falham**
 
@@ -1189,12 +1193,21 @@ const MEAL_LABELS: Record<MealType, string> = {
   snack: 'Lanche',
 }
 
+type Mode = 'search' | 'manual' | 'favorites'
+
+const MODE_LABELS: Record<Mode, string> = {
+  search: 'Buscar',
+  manual: 'Manual',
+  favorites: 'Favoritos',
+}
+
 export function AddFoodPage() {
   const { addEntry } = useFoodEntries()
   const { favorites, addFavorite } = useFavorites()
   const navigate = useNavigate()
 
   const [mealType, setMealType] = useState<MealType>('breakfast')
+  const [mode, setMode] = useState<Mode>('search')
   const [error, setError] = useState<string | null>(null)
 
   const [query, setQuery] = useState('')
@@ -1307,105 +1320,123 @@ export function AddFoodPage() {
           ))}
         </select>
 
+        <div className="tab-bar" role="tablist">
+          {Object.entries(MODE_LABELS).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={mode === value}
+              className={mode === value ? 'tab tab-active' : 'tab'}
+              onClick={() => setMode(value as Mode)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {error && (
           <p role="alert" className="alert">
             {error}
           </p>
         )}
 
-        <section>
-          <h2>Buscar na base de alimentos</h2>
-          <form onSubmit={handleSearch}>
-            <label htmlFor="food-search-query">Nome do alimento</label>
-            <input id="food-search-query" type="text" value={query} onChange={(e) => setQuery(e.target.value)} />
-            <button type="submit" className="button button-secondary" disabled={searching}>
-              {searching ? 'Buscando...' : 'Buscar'}
-            </button>
-          </form>
+        {mode === 'search' && (
+          <section>
+            <form onSubmit={handleSearch}>
+              <label htmlFor="food-search-query">Nome do alimento</label>
+              <input id="food-search-query" type="text" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <button type="submit" className="button button-secondary" disabled={searching}>
+                {searching ? 'Buscando...' : 'Buscar'}
+              </button>
+            </form>
 
-          {results.length > 0 && (
-            <ul className="result-list">
-              {results.map((food) => (
-                <li key={food.id}>
-                  <button type="button" className="result-item" onClick={() => setSelectedFood(food)}>
-                    {food.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+            {results.length > 0 && (
+              <ul className="result-list">
+                {results.map((food) => (
+                  <li key={food.id}>
+                    <button type="button" className="result-item" onClick={() => setSelectedFood(food)}>
+                      {food.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
 
-          {selectedFood && (
-            <form onSubmit={handleAddSearched} className="inline-form">
-              <p>{selectedFood.name}</p>
-              <label htmlFor="food-grams">Quantidade (g)</label>
+            {selectedFood && (
+              <form onSubmit={handleAddSearched} className="inline-form">
+                <p>{selectedFood.name}</p>
+                <label htmlFor="food-grams">Quantidade (g)</label>
+                <input
+                  id="food-grams"
+                  type="number"
+                  value={grams}
+                  onChange={(e) => setGrams(e.target.value)}
+                  min={1}
+                  required
+                />
+                <button type="submit" className="button button-primary">
+                  Adicionar
+                </button>
+              </form>
+            )}
+          </section>
+        )}
+
+        {mode === 'manual' && (
+          <section>
+            <form onSubmit={handleManualSubmit}>
+              <label htmlFor="manual-name">Nome</label>
+              <input id="manual-name" type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} required />
+
+              <label htmlFor="manual-calories">Calorias (kcal)</label>
               <input
-                id="food-grams"
+                id="manual-calories"
                 type="number"
-                value={grams}
-                onChange={(e) => setGrams(e.target.value)}
-                min={1}
+                value={manualCalories}
+                onChange={(e) => setManualCalories(e.target.value)}
                 required
+                min={0}
               />
+
+              <label htmlFor="manual-protein">Proteína (g)</label>
+              <input id="manual-protein" type="number" value={manualProtein} onChange={(e) => setManualProtein(e.target.value)} min={0} />
+
+              <label htmlFor="manual-carb">Carboidrato (g)</label>
+              <input id="manual-carb" type="number" value={manualCarb} onChange={(e) => setManualCarb(e.target.value)} min={0} />
+
+              <label htmlFor="manual-fat">Gordura (g)</label>
+              <input id="manual-fat" type="number" value={manualFat} onChange={(e) => setManualFat(e.target.value)} min={0} />
+
+              <label className="checkbox-label">
+                <input type="checkbox" checked={saveAsFavorite} onChange={(e) => setSaveAsFavorite(e.target.checked)} />
+                Salvar como favorito
+              </label>
+
               <button type="submit" className="button button-primary">
                 Adicionar
               </button>
             </form>
-          )}
-        </section>
+          </section>
+        )}
 
-        <section>
-          <h2>Entrada manual</h2>
-          <form onSubmit={handleManualSubmit}>
-            <label htmlFor="manual-name">Nome</label>
-            <input id="manual-name" type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} required />
-
-            <label htmlFor="manual-calories">Calorias (kcal)</label>
-            <input
-              id="manual-calories"
-              type="number"
-              value={manualCalories}
-              onChange={(e) => setManualCalories(e.target.value)}
-              required
-              min={0}
-            />
-
-            <label htmlFor="manual-protein">Proteína (g)</label>
-            <input id="manual-protein" type="number" value={manualProtein} onChange={(e) => setManualProtein(e.target.value)} min={0} />
-
-            <label htmlFor="manual-carb">Carboidrato (g)</label>
-            <input id="manual-carb" type="number" value={manualCarb} onChange={(e) => setManualCarb(e.target.value)} min={0} />
-
-            <label htmlFor="manual-fat">Gordura (g)</label>
-            <input id="manual-fat" type="number" value={manualFat} onChange={(e) => setManualFat(e.target.value)} min={0} />
-
-            <label className="checkbox-label">
-              <input type="checkbox" checked={saveAsFavorite} onChange={(e) => setSaveAsFavorite(e.target.checked)} />
-              Salvar como favorito
-            </label>
-
-            <button type="submit" className="button button-primary">
-              Adicionar
-            </button>
-          </form>
-        </section>
-
-        <section>
-          <h2>Favoritos</h2>
-          {favorites.length === 0 ? (
-            <p className="footnote">Nenhum favorito salvo ainda.</p>
-          ) : (
-            <ul className="result-list">
-              {favorites.map((favorite) => (
-                <li key={favorite.id}>
-                  <button type="button" className="result-item" onClick={() => handleAddFavorite(favorite)}>
-                    {favorite.name} — {favorite.caloriesKcal} kcal
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {mode === 'favorites' && (
+          <section>
+            {favorites.length === 0 ? (
+              <p className="footnote">Nenhum favorito salvo ainda.</p>
+            ) : (
+              <ul className="result-list">
+                {favorites.map((favorite) => (
+                  <li key={favorite.id}>
+                    <button type="button" className="result-item" onClick={() => handleAddFavorite(favorite)}>
+                      {favorite.name} — {favorite.caloriesKcal} kcal
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
       </div>
     </div>
   )
@@ -1415,6 +1446,29 @@ export function AddFoodPage() {
 - [ ] **Step 4: Adicionar em `app/src/index.css`** (ao final do arquivo):
 
 ```css
+.tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.5rem 0.1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.tab-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
 .result-list {
   list-style: none;
   margin: 0.75rem 0;
