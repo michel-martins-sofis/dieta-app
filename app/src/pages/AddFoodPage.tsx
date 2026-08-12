@@ -121,7 +121,7 @@ export function AddFoodPage() {
   return (
     <div className="page">
       <div className="card card--wide">
-        <Link to="/diario" className="back-link">
+        <Link to="/diario" style={{ textDecoration: 'none' }} className="back-link">
           ← Voltar
         </Link>
         <h1>Adicionar alimento</h1>

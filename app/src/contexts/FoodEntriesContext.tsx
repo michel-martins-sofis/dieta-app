@@ -46,6 +46,7 @@ interface FoodEntriesContextValue {
   error: string | null
   addEntry: (input: FoodEntryInput) => Promise<{ error: string | null }>
   removeEntry: (id: number) => Promise<{ error: string | null }>
+  fetchEntriesByDate: (date: string) => Promise<{ entries: FoodEntry[]; error: string | null }>
 }
 
 const FoodEntriesContext = createContext<FoodEntriesContextValue | undefined>(undefined)
@@ -62,7 +63,7 @@ function fromRow(row: FoodEntryRow): FoodEntry {
   }
 }
 
-function todayDateString(): string {
+export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
@@ -170,9 +171,31 @@ export function FoodEntriesProvider({ children }: { children: ReactNode }) {
     [userId]
   )
 
+  const fetchEntriesByDate = useCallback(
+    async (date: string) => {
+      if (!userId) {
+        return { entries: [], error: 'Não autenticado.' }
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from('food_entries')
+        .select('id, meal_type, name, calories_kcal, protein_g, carb_g, fat_g')
+        .eq('user_id', userId)
+        .eq('logged_date', date)
+        .order('created_at')
+
+      if (fetchError) {
+        return { entries: [], error: fetchError.message }
+      }
+
+      return { entries: (data as FoodEntryRow[]).map(fromRow), error: null }
+    },
+    [userId]
+  )
+
   const value = useMemo<FoodEntriesContextValue>(
-    () => ({ entries, loading, error, addEntry, removeEntry }),
-    [entries, loading, error, addEntry, removeEntry]
+    () => ({ entries, loading, error, addEntry, removeEntry, fetchEntriesByDate }),
+    [entries, loading, error, addEntry, removeEntry, fetchEntriesByDate]
   )
 
   return <FoodEntriesContext.Provider value={value}>{children}</FoodEntriesContext.Provider>

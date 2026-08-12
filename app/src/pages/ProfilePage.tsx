@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useProfile } from '../contexts/ProfileContext'
 import { calculateNutritionGoals, type ActivityLevel, type Goal, type Sex } from '../lib/nutritionGoals'
 
@@ -21,6 +21,7 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState<'personal' | 'goals'>('personal')
 
   useEffect(() => {
     if (loading || initialized) return
@@ -64,9 +65,19 @@ export function ProfilePage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    setSubmitting(true)
     setError(null)
     setNotice(null)
+    if (!age || !weightKg || !heightCm) {
+      setActiveTab('personal')
+      setError('Preencha os dados pessoais antes de salvar.')
+      return
+    }
+    if (!calories || !proteinG || !carbG || !fatG) {
+      setActiveTab('goals')
+      setError('Preencha as metas nutricionais antes de salvar.')
+      return
+    }
+    setSubmitting(true)
     const { error: saveError } = await saveProfile({
       age: Number(age),
       weightKg: Number(weightKg),
@@ -98,11 +109,36 @@ export function ProfilePage() {
   return (
     <div className="page">
       <div className="card card--wide">
+        {isEditing && (
+          <Link to="/dashboard" className="back-link">
+            ← Fechar
+          </Link>
+        )}
         <h1>Seu perfil</h1>
-        <form onSubmit={handleSubmit}>
-          <section className="form-section">
-            <h2>Dados pessoais</h2>
 
+        <div className="tab-bar" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'personal'}
+            className={activeTab === 'personal' ? 'tab tab-active' : 'tab'}
+            onClick={() => setActiveTab('personal')}
+          >
+            Dados pessoais
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'goals'}
+            className={activeTab === 'goals' ? 'tab tab-active' : 'tab'}
+            onClick={() => setActiveTab('goals')}
+          >
+            Metas nutricionais
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <section className="form-section" hidden={activeTab !== 'personal'}>
             <label htmlFor="profile-age">Idade</label>
             <input id="profile-age" type="number" value={age} onChange={(e) => setAge(e.target.value)} required min={1} />
 
@@ -135,9 +171,7 @@ export function ProfilePage() {
             </select>
           </section>
 
-          <section className="form-section">
-            <h2>Metas nutricionais</h2>
-
+          <section className="form-section" hidden={activeTab !== 'goals'}>
             <button type="button" className="button button-secondary" onClick={handleCalculate}>
               Calcular meta sugerida
             </button>

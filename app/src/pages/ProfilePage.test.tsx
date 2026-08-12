@@ -35,14 +35,55 @@ describe('ProfilePage', () => {
     expect(screen.queryByLabelText('Idade')).not.toBeInTheDocument()
   })
 
-  it('shows personal data and nutrition goals as separate sections', () => {
+  it('does not show a close link when creating a profile for the first time', () => {
     render(
       <MemoryRouter>
         <ProfilePage />
       </MemoryRouter>
     )
-    expect(screen.getByRole('heading', { name: 'Dados pessoais' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Metas nutricionais' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /fechar/i })).not.toBeInTheDocument()
+  })
+
+  it('shows a close link back to the dashboard when editing an existing profile', () => {
+    mockUseProfile.mockReturnValue({
+      profile: {
+        age: 30,
+        weightKg: 80,
+        heightCm: 180,
+        sex: 'male',
+        activityLevel: 'sedentary',
+        goal: 'maintain',
+        dailyCaloriesTarget: 2000,
+        dailyProteinG: 120,
+        dailyCarbG: 200,
+        dailyFatG: 60,
+      },
+      loading: false,
+      saveProfile: mockSaveProfile,
+    })
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('link', { name: /fechar/i })).toHaveAttribute('href', '/dashboard')
+  })
+
+  it('shows personal data and nutrition goals as separate tabs', async () => {
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('tab', { name: 'Dados pessoais' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByLabelText('Idade')).toBeVisible()
+    expect(screen.getByLabelText('Calorias (kcal/dia)')).not.toBeVisible()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Metas nutricionais' }))
+
+    expect(screen.getByRole('tab', { name: 'Metas nutricionais' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByLabelText('Calorias (kcal/dia)')).toBeVisible()
+    expect(screen.getByLabelText('Idade')).not.toBeVisible()
   })
 
   it('calculates suggested targets from the entered profile data', async () => {
@@ -57,6 +98,7 @@ describe('ProfilePage', () => {
     await userEvent.selectOptions(screen.getByLabelText('Sexo biológico'), 'male')
     await userEvent.selectOptions(screen.getByLabelText('Nível de atividade física'), 'sedentary')
     await userEvent.selectOptions(screen.getByLabelText('Objetivo'), 'maintain')
+    await userEvent.click(screen.getByRole('tab', { name: 'Metas nutricionais' }))
     await userEvent.click(screen.getByRole('button', { name: /calcular meta sugerida/i }))
 
     const bmr = 10 * 80 + 6.25 * 180 - 5 * 30 + 5
@@ -75,6 +117,7 @@ describe('ProfilePage', () => {
     await userEvent.type(screen.getByLabelText('Idade'), '30')
     await userEvent.type(screen.getByLabelText('Peso (kg)'), '80')
     await userEvent.type(screen.getByLabelText('Altura (cm)'), '180')
+    await userEvent.click(screen.getByRole('tab', { name: 'Metas nutricionais' }))
     await userEvent.click(screen.getByRole('button', { name: /calcular meta sugerida/i }))
     await userEvent.click(screen.getByRole('button', { name: /salvar perfil/i }))
 
@@ -127,6 +170,7 @@ describe('ProfilePage', () => {
     await userEvent.type(screen.getByLabelText('Idade'), '30')
     await userEvent.type(screen.getByLabelText('Peso (kg)'), '80')
     await userEvent.type(screen.getByLabelText('Altura (cm)'), '180')
+    await userEvent.click(screen.getByRole('tab', { name: 'Metas nutricionais' }))
     await userEvent.click(screen.getByRole('button', { name: /calcular meta sugerida/i }))
     await userEvent.click(screen.getByRole('button', { name: /salvar perfil/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Falha ao salvar')

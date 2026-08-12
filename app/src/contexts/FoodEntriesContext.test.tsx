@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -63,11 +64,13 @@ const ENTRY_ROW = {
 }
 
 function TestConsumer() {
-  const { entries, loading, addEntry, removeEntry } = useFoodEntries()
+  const { entries, loading, addEntry, removeEntry, fetchEntriesByDate } = useFoodEntries()
+  const [historyCount, setHistoryCount] = useState<number | null>(null)
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="count">{entries.length}</span>
+      <span data-testid="history-count">{historyCount ?? 'none'}</span>
       <button
         onClick={() =>
           addEntry({
@@ -87,6 +90,14 @@ function TestConsumer() {
           remover-{entry.id}
         </button>
       ))}
+      <button
+        onClick={async () => {
+          const { entries: fetched } = await fetchEntriesByDate('2026-08-01')
+          setHistoryCount(fetched.length)
+        }}
+      >
+        buscar-2026-08-01
+      </button>
     </div>
   )
 }
@@ -149,5 +160,21 @@ describe('FoodEntriesContext', () => {
     await userEvent.click(screen.getByText('remover-1'))
     await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('0'))
     expect(mockDeleteEq).toHaveBeenCalledWith('id', 1)
+  })
+
+  it('fetches entries for an arbitrary past date without touching the current entries state', async () => {
+    mockOrder
+      .mockResolvedValueOnce({ data: [ENTRY_ROW], error: null })
+      .mockResolvedValueOnce({ data: [ENTRY_ROW, { ...ENTRY_ROW, id: 2 }], error: null })
+    render(
+      <FoodEntriesProvider>
+        <TestConsumer />
+      </FoodEntriesProvider>
+    )
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
+    await userEvent.click(screen.getByText('buscar-2026-08-01'))
+    await waitFor(() => expect(screen.getByTestId('history-count').textContent).toBe('2'))
+    expect(mockEq).toHaveBeenCalledWith('logged_date', '2026-08-01')
+    expect(screen.getByTestId('count').textContent).toBe('1')
   })
 })
