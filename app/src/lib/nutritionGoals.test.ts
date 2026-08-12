@@ -68,7 +68,7 @@ describe('calculateNutritionGoals', () => {
       activityLevel: 'sedentary',
       goal: 'lose_weight',
     })
-    expect(goals.calories).toBeGreaterThanOrEqual(1200)
+    expect(goals.calories).toBe(1200)
   })
 
   it('splits remaining calories into carbs after protein and fat are allocated', () => {
@@ -84,5 +84,34 @@ describe('calculateNutritionGoals', () => {
     const fatCalories = goals.fatG * 9
     const carbCalories = goals.carbG * 4
     expect(proteinCalories + fatCalories + carbCalories).toBeCloseTo(goals.calories, -1)
+    expect(goals.fatG).toBe(Math.round(goals.calories * 0.25 / 9))
+  })
+
+  it('applies active activity multiplier (1.725)', () => {
+    const goals = calculateNutritionGoals({
+      age: 35,
+      weightKg: 75,
+      heightCm: 175,
+      sex: 'male',
+      activityLevel: 'active',
+      goal: 'maintain',
+    })
+    const bmr = 10 * 75 + 6.25 * 175 - 5 * 35 + 5
+    const tdee = bmr * 1.725
+    expect(goals.calories).toBe(Math.round(tdee))
+  })
+
+  it('applies very_active activity multiplier (1.9)', () => {
+    const goals = calculateNutritionGoals({
+      age: 28,
+      weightKg: 85,
+      heightCm: 185,
+      sex: 'male',
+      activityLevel: 'very_active',
+      goal: 'maintain',
+    })
+    const bmr = 10 * 85 + 6.25 * 185 - 5 * 28 + 5
+    const tdee = bmr * 1.9
+    expect(goals.calories).toBe(Math.round(tdee))
   })
 })
