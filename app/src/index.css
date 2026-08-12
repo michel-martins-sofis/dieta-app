@@ -186,6 +186,11 @@ a {
   outline-offset: 1px;
 }
 
+.form-section {
+  display: flex;
+  flex-direction: column;
+}
+
 .form-section + .form-section {
   margin-top: 1.5rem;
   padding-top: 1.25rem;

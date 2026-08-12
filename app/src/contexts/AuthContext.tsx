@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import { translateAuthError } from '../lib/authErrors'
 
 interface AuthContextValue {
   user: User | null
@@ -49,12 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({ email, password })
-    return { error: error ? error.message : null, session: data.session }
+    return { error: error ? translateAuthError(error.message) : null, session: data.session }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error ? error.message : null }
+    return { error: error ? translateAuthError(error.message) : null }
   }, [])
 
   const signOut = useCallback(async () => {
