@@ -83,23 +83,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     let ignore = false
     setLoading(true)
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }: { data: ProfileRow | null }) => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
         if (ignore) return
-        setProfile(data ? fromRow(data) : null)
-      })
-      .catch(() => {
+        setProfile(data ? fromRow(data as ProfileRow) : null)
+      } catch {
         if (ignore) return
         setProfile(null)
-      })
-      .finally(() => {
+      } finally {
         if (ignore) return
         setLoading(false)
-      })
+      }
+    }
+
+    fetchProfile()
 
     return () => {
       ignore = true
