@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { UserRound, Target } from 'lucide-react'
 import { useProfile } from '../contexts/ProfileContext'
 import { calculateNutritionGoals, type ActivityLevel, type Goal, type Sex } from '../lib/nutritionGoals'
 
@@ -107,13 +108,14 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="page">
-      <div className="card card--wide">
-        {isEditing && (
-          <Link to="/dashboard" className="back-link">
-            ← Fechar
-          </Link>
-        )}
+    <div className="page-container">
+      {isEditing && (
+        <Link to="/dashboard" className="back-link">
+          ← Fechar
+        </Link>
+      )}
+
+      <div className="section-card">
         <h1>Seu perfil</h1>
 
         <div className="tab-bar" role="tablist">
@@ -124,6 +126,7 @@ export function ProfilePage() {
             className={activeTab === 'personal' ? 'tab tab-active' : 'tab'}
             onClick={() => setActiveTab('personal')}
           >
+            <UserRound size={15} />
             Dados pessoais
           </button>
           <button
@@ -133,6 +136,7 @@ export function ProfilePage() {
             className={activeTab === 'goals' ? 'tab tab-active' : 'tab'}
             onClick={() => setActiveTab('goals')}
           >
+            <Target size={15} />
             Metas nutricionais
           </button>
         </div>

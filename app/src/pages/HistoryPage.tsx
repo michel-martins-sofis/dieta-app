@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { useProfile } from '../contexts/ProfileContext'
 import { useWeightLogs, type WeightLog } from '../contexts/WeightLogsContext'
 import { useFoodEntries, todayDateString, type DailyCalorieTotal } from '../contexts/FoodEntriesContext'
@@ -99,13 +98,12 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="page">
-      <div className="card card--wide">
-        <Link to="/dashboard" className="back-link">
-          ← Painel
-        </Link>
+    <div className="page-container">
+      <div className="top-bar">
         <h1>Histórico</h1>
+      </div>
 
+      <div className="section-card">
         <form onSubmit={handleLogWeight} className="inline-form">
           <div className="form-field">
             <label htmlFor="history-weight">Peso de hoje (kg)</label>
@@ -134,10 +132,14 @@ export function HistoryPage() {
             {notice}
           </p>
         )}
+      </div>
 
+      <div className="section-card">
         <h2>Evolução do peso</h2>
         {loading ? <p className="footnote">Carregando...</p> : <WeightChart logs={weightLogs} />}
+      </div>
 
+      <div className="section-card">
         <h2>Calorias consumidas (últimos {CALORIES_RANGE_DAYS} dias)</h2>
         {loading ? (
           <p className="footnote">Carregando...</p>

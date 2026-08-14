@@ -1,11 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Search, PenLine, Star } from 'lucide-react'
 import { useFoodEntries, MEAL_LABELS, type MealType } from '../contexts/FoodEntriesContext'
 import { useFavorites, type Favorite } from '../contexts/FavoritesContext'
 import { searchFoods, type FoodSearchResult } from '../lib/foodsApi'
 import { scaleByGrams } from '../lib/foodPortion'
 
 type Mode = 'search' | 'manual' | 'favorites'
+
+const MODE_ICONS: Record<Mode, typeof Search> = {
+  search: Search,
+  manual: PenLine,
+  favorites: Star,
+}
 
 const MODE_LABELS: Record<Mode, string> = {
   search: 'Buscar',
@@ -119,11 +126,12 @@ export function AddFoodPage() {
   }
 
   return (
-    <div className="page">
-      <div className="card card--wide">
-        <Link to="/diario" style={{ textDecoration: 'none' }} className="back-link">
-          ← Voltar
-        </Link>
+    <div className="page-container">
+      <Link to="/diario" className="back-link">
+        ← Voltar
+      </Link>
+
+      <div className="section-card">
         <h1>Adicionar alimento</h1>
 
         <div className="form-field">
@@ -138,18 +146,22 @@ export function AddFoodPage() {
         </div>
 
         <div className="tab-bar" role="tablist">
-          {Object.entries(MODE_LABELS).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={mode === value}
-              className={mode === value ? 'tab tab-active' : 'tab'}
-              onClick={() => setMode(value as Mode)}
-            >
-              {label}
-            </button>
-          ))}
+          {Object.entries(MODE_LABELS).map(([value, label]) => {
+            const Icon = MODE_ICONS[value as Mode]
+            return (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={mode === value}
+                className={mode === value ? 'tab tab-active' : 'tab'}
+                onClick={() => setMode(value as Mode)}
+              >
+                <Icon size={15} />
+                {label}
+              </button>
+            )
+          })}
         </div>
 
         {error && (

@@ -10,6 +10,10 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ signUp: mockSignUp }),
 }))
 
+vi.mock('../contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}))
+
 describe('SignupPage', () => {
   beforeEach(() => {
     mockSignUp.mockReset()

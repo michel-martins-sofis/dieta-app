@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { AuthLayout } from '../components/AuthLayout'
 
 export function LoginPage() {
   const { signIn } = useAuth()
@@ -21,7 +22,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="page">
+    <AuthLayout>
       <div className="card">
         <h1>Entrar</h1>
         <form onSubmit={handleSubmit}>
@@ -57,6 +58,6 @@ export function LoginPage() {
           Não tem conta? <Link to="/signup">Criar conta</Link>
         </p>
       </div>
-    </div>
+    </AuthLayout>
   )
 }

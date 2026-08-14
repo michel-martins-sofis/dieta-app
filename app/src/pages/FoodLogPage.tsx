@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useFoodEntries, MEAL_LABELS, todayDateString, type FoodEntry } from '../contexts/FoodEntriesContext'
 
 function shiftDate(dateStr: string, deltaDays: number): string {
@@ -56,20 +57,17 @@ export function FoodLogPage() {
   }
 
   return (
-    <div className="page">
-      <div className="card card--wide">
-        <Link to="/dashboard" className="back-link">
-          ← Painel
-        </Link>
-        <div className="top-bar">
-          <h1>Diário alimentar</h1>
-          {isToday && (
-            <Link to="/add-food" className="button button-primary">
-              Adicionar alimento
-            </Link>
-          )}
-        </div>
+    <div className="page-container">
+      <div className="top-bar">
+        <h1>Diário alimentar</h1>
+        {isToday && (
+          <Link to="/add-food" className="button button-primary">
+            <Plus size={16} /> Adicionar alimento
+          </Link>
+        )}
+      </div>
 
+      <div className="section-card">
         <div className="date-nav">
           <button
             type="button"
@@ -77,7 +75,7 @@ export function FoodLogPage() {
             aria-label="Dia anterior"
             onClick={() => setSelectedDate((current) => shiftDate(current, -1))}
           >
-            ‹
+            <ChevronLeft size={16} />
           </button>
           <div className="date-nav-current">
             <strong>{isToday ? 'Hoje' : formatDateLabel(selectedDate)}</strong>
@@ -96,7 +94,7 @@ export function FoodLogPage() {
             disabled={isToday}
             onClick={() => setSelectedDate((current) => shiftDate(current, 1))}
           >
-            ›
+            <ChevronRight size={16} />
           </button>
         </div>
 

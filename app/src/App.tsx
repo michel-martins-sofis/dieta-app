@@ -8,7 +8,7 @@ import { WeightLogsProvider } from './contexts/WeightLogsContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PublicOnlyRoute } from './components/PublicOnlyRoute'
 import { RequireProfile } from './components/RequireProfile'
-import { ThemeToggle } from './components/ThemeToggle'
+import { AppShell } from './components/AppShell'
 import { SignupPage } from './pages/SignupPage'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -20,7 +20,6 @@ import { HistoryPage } from './pages/HistoryPage'
 export function App() {
   return (
     <ThemeProvider>
-      <ThemeToggle />
       <AuthProvider>
         <ProfileProvider>
           <FoodEntriesProvider>
@@ -48,7 +47,9 @@ export function App() {
                       path="/profile"
                       element={
                         <ProtectedRoute>
-                          <ProfilePage />
+                          <AppShell>
+                            <ProfilePage />
+                          </AppShell>
                         </ProtectedRoute>
                       }
                     />
@@ -56,7 +57,9 @@ export function App() {
                       path="/add-food"
                       element={
                         <ProtectedRoute>
-                          <AddFoodPage />
+                          <AppShell>
+                            <AddFoodPage />
+                          </AppShell>
                         </ProtectedRoute>
                       }
                     />
@@ -65,7 +68,9 @@ export function App() {
                       element={
                         <ProtectedRoute>
                           <RequireProfile>
-                            <DashboardPage />
+                            <AppShell>
+                              <DashboardPage />
+                            </AppShell>
                           </RequireProfile>
                         </ProtectedRoute>
                       }
@@ -75,7 +80,9 @@ export function App() {
                       element={
                         <ProtectedRoute>
                           <RequireProfile>
-                            <FoodLogPage />
+                            <AppShell>
+                              <FoodLogPage />
+                            </AppShell>
                           </RequireProfile>
                         </ProtectedRoute>
                       }
@@ -85,7 +92,9 @@ export function App() {
                       element={
                         <ProtectedRoute>
                           <RequireProfile>
-                            <HistoryPage />
+                            <AppShell>
+                              <HistoryPage />
+                            </AppShell>
                           </RequireProfile>
                         </ProtectedRoute>
                       }
