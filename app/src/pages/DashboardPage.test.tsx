@@ -8,6 +8,7 @@ const mockRemoveEntry = vi.fn()
 const mockUseAuth = vi.fn()
 const mockUseProfile = vi.fn()
 const mockUseFoodEntries = vi.fn()
+const mockFetchDailyWaterTotals = vi.fn()
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
@@ -21,6 +22,10 @@ vi.mock('../contexts/FoodEntriesContext', () => ({
   useFoodEntries: () => mockUseFoodEntries(),
 }))
 
+vi.mock('../contexts/WaterLogsContext', () => ({
+  useWaterLogs: () => ({ fetchDailyWaterTotals: mockFetchDailyWaterTotals }),
+}))
+
 describe('DashboardPage', () => {
   beforeEach(() => {
     mockSignOut.mockReset()
@@ -30,6 +35,7 @@ describe('DashboardPage', () => {
       profile: { dailyCaloriesTarget: 2500, dailyProteinG: 130, dailyCarbG: 300, dailyFatG: 70 },
     })
     mockUseFoodEntries.mockReset().mockReturnValue({ entries: [], removeEntry: mockRemoveEntry })
+    mockFetchDailyWaterTotals.mockReset().mockResolvedValue({ totals: [{ date: '2026-08-13', amountMl: 500 }] })
   })
 
   it('shows the daily target', () => {
@@ -84,5 +90,14 @@ describe('DashboardPage', () => {
       </MemoryRouter>
     )
     expect(screen.getByRole('link', { name: /ver histórico/i })).toHaveAttribute('href', '/historico')
+  })
+
+  it("shows today's water total", async () => {
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    )
+    expect(await screen.findByText('500 ml')).toBeInTheDocument()
   })
 })

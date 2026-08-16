@@ -1,18 +1,33 @@
-import { Flame, Beef, Wheat, Droplet } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Flame, Beef, Wheat, Droplet, Droplets } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useProfile } from '../contexts/ProfileContext'
 import { useFoodEntries } from '../contexts/FoodEntriesContext'
+import { useWaterLogs } from '../contexts/WaterLogsContext'
 
 export function DashboardPage() {
   const { profile } = useProfile()
   const { entries } = useFoodEntries()
+  const { fetchDailyWaterTotals } = useWaterLogs()
+  const [waterMl, setWaterMl] = useState(0)
+
+  useEffect(() => {
+    let ignore = false
+    fetchDailyWaterTotals(1).then(({ totals }) => {
+      if (ignore) return
+      setWaterMl(totals[totals.length - 1]?.amountMl ?? 0)
+    })
+    return () => {
+      ignore = true
+    }
+  }, [fetchDailyWaterTotals])
 
   const totals = entries.reduce(
     (acc, entry) => ({
-      caloriesKcal: acc.caloriesKcal + entry.caloriesKcal,
-      proteinG: acc.proteinG + entry.proteinG,
-      carbG: acc.carbG + entry.carbG,
-      fatG: acc.fatG + entry.fatG,
+      caloriesKcal: acc.caloriesKcal + (entry.caloriesKcal ?? 0),
+      proteinG: acc.proteinG + (entry.proteinG ?? 0),
+      carbG: acc.carbG + (entry.carbG ?? 0),
+      fatG: acc.fatG + (entry.fatG ?? 0),
     }),
     { caloriesKcal: 0, proteinG: 0, carbG: 0, fatG: 0 }
   )
@@ -89,6 +104,13 @@ export function DashboardPage() {
                 style={{ width: `${progressPercent(totals.fatG, profile.dailyFatG)}%` }}
               />
             </div>
+          </div>
+          <div className="goal-stat goal-stat--water">
+            <span className="goal-stat-icon">
+              <Droplets size={18} />
+            </span>
+            <strong>{waterMl} ml</strong>
+            <span>Água hoje</span>
           </div>
         </div>
       )}

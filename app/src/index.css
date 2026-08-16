@@ -11,6 +11,8 @@
   --color-protein-soft: #dbeafe;
   --color-fat: #a855f7;
   --color-fat-soft: #f3e8ff;
+  --color-water: #06b6d4;
+  --color-water-soft: #cffafe;
 
   --gradient-brand: linear-gradient(135deg, #16a34a, #22c55e 55%, #f97316);
   --gradient-hero-soft: linear-gradient(160deg, #ecfdf5 0%, #fff7ed 100%);
@@ -59,6 +61,8 @@
   --color-protein-soft: rgba(96, 165, 250, 0.16);
   --color-fat: #c084fc;
   --color-fat-soft: rgba(192, 132, 252, 0.16);
+  --color-water: #22d3ee;
+  --color-water-soft: rgba(34, 211, 238, 0.16);
 
   --gradient-hero-soft: linear-gradient(160deg, #06231a 0%, #241206 100%);
 
@@ -670,6 +674,11 @@ a {
   --stat-color-soft: var(--color-fat-soft);
 }
 
+.goal-stat--water {
+  --stat-color: var(--color-water);
+  --stat-color-soft: var(--color-water-soft);
+}
+
 .goal-stat strong {
   display: block;
   font-size: 1.15rem;
@@ -904,6 +913,54 @@ a {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.chart-line--protein {
+  stroke: var(--color-protein);
+}
+
+.chart-line--carb {
+  stroke: var(--color-primary);
+}
+
+.chart-line--fat {
+  stroke: var(--color-fat);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chart-legend-item::before {
+  content: '';
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--legend-color);
+}
+
+.chart-legend-item--protein {
+  --legend-color: var(--color-protein);
+}
+
+.chart-legend-item--carb {
+  --legend-color: var(--color-primary);
+}
+
+.chart-legend-item--fat {
+  --legend-color: var(--color-fat);
 }
 
 .chart-dot {

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, UtensilsCrossed, LineChart, User, LogOut } from 'lucide-react'
+import { LayoutDashboard, UtensilsCrossed, LineChart, Dumbbell, User, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'Painel', icon: LayoutDashboard },
   { to: '/diario', label: 'Diário', icon: UtensilsCrossed },
   { to: '/historico', label: 'Histórico', icon: LineChart },
+  { to: '/treinos', label: 'Treinos', icon: Dumbbell },
   { to: '/profile', label: 'Perfil', icon: User },
 ]
 

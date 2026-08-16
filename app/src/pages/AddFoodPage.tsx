@@ -1,7 +1,15 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, PenLine, Star } from 'lucide-react'
-import { useFoodEntries, MEAL_LABELS, type MealType } from '../contexts/FoodEntriesContext'
+import {
+  useFoodEntries,
+  MEAL_LABELS,
+  todayDateString,
+  type FoodEntry,
+  type FoodEntryInput,
+  type MealType,
+} from '../contexts/FoodEntriesContext'
+import { useMealPlans } from '../contexts/MealPlansContext'
 import { useFavorites, type Favorite } from '../contexts/FavoritesContext'
 import { searchFoods, type FoodSearchResult } from '../lib/foodsApi'
 import { scaleByGrams } from '../lib/foodPortion'
@@ -21,13 +29,22 @@ const MODE_LABELS: Record<Mode, string> = {
 }
 
 export function AddFoodPage() {
-  const { addEntry } = useFoodEntries()
+  const { addEntry, updateEntry, fetchEntriesByDate } = useFoodEntries()
+  const { addPlannedMeal } = useMealPlans()
   const { favorites, addFavorite } = useFavorites()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+
+  const editId = searchParams.get('edit') ? Number(searchParams.get('edit')) : null
+  const isEditing = editId !== null
+  const targetDate = searchParams.get('date') ?? todayDateString()
+  const isFuturePlan = !isEditing && targetDate > todayDateString()
 
   const [mealType, setMealType] = useState<MealType>('breakfast')
-  const [mode, setMode] = useState<Mode>('search')
+  const [mode, setMode] = useState<Mode>(isEditing ? 'manual' : 'search')
   const [error, setError] = useState<string | null>(null)
+  const [loadingEntry, setLoadingEntry] = useState(isEditing)
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<FoodSearchResult[]>([])
@@ -41,6 +58,58 @@ export function AddFoodPage() {
   const [manualCarb, setManualCarb] = useState('')
   const [manualFat, setManualFat] = useState('')
   const [saveAsFavorite, setSaveAsFavorite] = useState(false)
+
+  useEffect(() => {
+    if (!isEditing || editId === null) return
+
+    function fillFrom(entry: FoodEntry) {
+      setMealType(entry.mealType)
+      setManualName(entry.name)
+      setManualCalories(entry.caloriesKcal === null ? '' : String(entry.caloriesKcal))
+      setManualProtein(entry.proteinG === null ? '' : String(entry.proteinG))
+      setManualCarb(entry.carbG === null ? '' : String(entry.carbG))
+      setManualFat(entry.fatG === null ? '' : String(entry.fatG))
+      setLoadingEntry(false)
+    }
+
+    const stateEntry = (location.state as { entry?: FoodEntry } | null)?.entry
+    if (stateEntry && stateEntry.id === editId) {
+      fillFrom(stateEntry)
+      return
+    }
+
+    let ignore = false
+    setLoadingEntry(true)
+    fetchEntriesByDate(targetDate).then(({ entries, error: fetchError }) => {
+      if (ignore) return
+      if (fetchError) {
+        setError(fetchError)
+        setLoadingEntry(false)
+        return
+      }
+      const found = entries.find((entry) => entry.id === editId)
+      if (found) {
+        fillFrom(found)
+      } else {
+        setError('Registro não encontrado.')
+        setLoadingEntry(false)
+      }
+    })
+    return () => {
+      ignore = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, editId, targetDate])
+
+  async function submitEntry(input: FoodEntryInput) {
+    if (isEditing && editId !== null) {
+      return updateEntry(editId, input)
+    }
+    if (isFuturePlan) {
+      return addPlannedMeal(input, targetDate)
+    }
+    return addEntry(input, targetDate)
+  }
 
   async function handleSearch(event: FormEvent) {
     event.preventDefault()
@@ -74,7 +143,7 @@ export function AddFoodPage() {
       },
       parsedGrams
     )
-    const { error: addError } = await addEntry({
+    const { error: addError } = await submitEntry({
       mealType,
       name: `${selectedFood.name} (${parsedGrams}g)`,
       ...scaled,
@@ -83,7 +152,7 @@ export function AddFoodPage() {
       setError(addError)
       return
     }
-    navigate('/diario')
+    navigate(`/diario?date=${targetDate}`)
   }
 
   async function handleManualSubmit(event: FormEvent) {
@@ -92,25 +161,31 @@ export function AddFoodPage() {
     const entry = {
       mealType,
       name: manualName,
-      caloriesKcal: Number(manualCalories),
-      proteinG: Number(manualProtein) || 0,
-      carbG: Number(manualCarb) || 0,
-      fatG: Number(manualFat) || 0,
+      caloriesKcal: manualCalories === '' ? null : Number(manualCalories),
+      proteinG: manualProtein === '' ? null : Number(manualProtein),
+      carbG: manualCarb === '' ? null : Number(manualCarb),
+      fatG: manualFat === '' ? null : Number(manualFat),
     }
-    const { error: addError } = await addEntry(entry)
+    const { error: addError } = await submitEntry(entry)
     if (addError) {
       setError(addError)
       return
     }
     if (saveAsFavorite) {
-      await addFavorite(entry)
+      await addFavorite({
+        name: entry.name,
+        caloriesKcal: entry.caloriesKcal ?? 0,
+        proteinG: entry.proteinG ?? 0,
+        carbG: entry.carbG ?? 0,
+        fatG: entry.fatG ?? 0,
+      })
     }
-    navigate('/diario')
+    navigate(`/diario?date=${targetDate}`)
   }
 
   async function handleAddFavorite(favorite: Favorite) {
     setError(null)
-    const { error: addError } = await addEntry({
+    const { error: addError } = await submitEntry({
       mealType,
       name: favorite.name,
       caloriesKcal: favorite.caloriesKcal,
@@ -122,7 +197,7 @@ export function AddFoodPage() {
       setError(addError)
       return
     }
-    navigate('/diario')
+    navigate(`/diario?date=${targetDate}`)
   }
 
   return (
@@ -132,7 +207,9 @@ export function AddFoodPage() {
       </Link>
 
       <div className="section-card">
-        <h1>Adicionar alimento</h1>
+        <h1>{isEditing ? 'Editar alimento' : 'Adicionar alimento'}</h1>
+
+        {isFuturePlan && <p className="footnote">Planejando refeição para {targetDate}.</p>}
 
         <div className="form-field">
           <label htmlFor="add-food-meal">Refeição</label>
@@ -145,24 +222,26 @@ export function AddFoodPage() {
           </select>
         </div>
 
-        <div className="tab-bar" role="tablist">
-          {Object.entries(MODE_LABELS).map(([value, label]) => {
-            const Icon = MODE_ICONS[value as Mode]
-            return (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={mode === value}
-                className={mode === value ? 'tab tab-active' : 'tab'}
-                onClick={() => setMode(value as Mode)}
-              >
-                <Icon size={15} />
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        {!isEditing && (
+          <div className="tab-bar" role="tablist">
+            {Object.entries(MODE_LABELS).map(([value, label]) => {
+              const Icon = MODE_ICONS[value as Mode]
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === value}
+                  className={mode === value ? 'tab tab-active' : 'tab'}
+                  onClick={() => setMode(value as Mode)}
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {error && (
           <p role="alert" className="alert">
@@ -170,6 +249,10 @@ export function AddFoodPage() {
           </p>
         )}
 
+        {isEditing && loadingEntry ? (
+          <p className="footnote">Carregando...</p>
+        ) : (
+          <>
         {mode === 'search' && (
           <section>
             <form onSubmit={handleSearch}>
@@ -224,7 +307,6 @@ export function AddFoodPage() {
                 type="number"
                 value={manualCalories}
                 onChange={(e) => setManualCalories(e.target.value)}
-                required
                 min={0}
               />
 
@@ -243,7 +325,7 @@ export function AddFoodPage() {
               </label>
 
               <button type="submit" className="button button-primary">
-                Adicionar
+                {isEditing ? 'Salvar alterações' : 'Adicionar'}
               </button>
             </form>
           </section>
@@ -265,6 +347,8 @@ export function AddFoodPage() {
               </ul>
             )}
           </section>
+        )}
+          </>
         )}
       </div>
     </div>

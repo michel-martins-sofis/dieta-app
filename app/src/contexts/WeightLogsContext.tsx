@@ -6,23 +6,34 @@ export interface WeightLog {
   id: number
   loggedDate: string
   weightKg: number
+  moment: string | null
+  confidence: string | null
 }
 
 interface WeightLogRow {
   id: number
   logged_date: string
   weight_kg: number
+  moment: string | null
+  confidence: string | null
 }
 
 interface WeightLogsContextValue {
-  logWeight: (weightKg: number, date: string) => Promise<{ error: string | null }>
+  logWeight: (weightKg: number, date: string, moment?: string | null) => Promise<{ error: string | null }>
   fetchRecentLogs: (days: number) => Promise<{ logs: WeightLog[]; error: string | null }>
+  fetchLogsInRange: (startDate: string, endDate: string) => Promise<{ logs: WeightLog[]; error: string | null }>
 }
 
 const WeightLogsContext = createContext<WeightLogsContextValue | undefined>(undefined)
 
 function fromRow(row: WeightLogRow): WeightLog {
-  return { id: row.id, loggedDate: row.logged_date, weightKg: row.weight_kg }
+  return {
+    id: row.id,
+    loggedDate: row.logged_date,
+    weightKg: row.weight_kg,
+    moment: row.moment ?? null,
+    confidence: row.confidence ?? null,
+  }
 }
 
 function daysAgoDateString(days: number): string {
@@ -36,17 +47,17 @@ export function WeightLogsProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null
 
   const logWeight = useCallback(
-    async (weightKg: number, date: string) => {
+    async (weightKg: number, date: string, moment: string | null = null) => {
       if (!userId) {
         return { error: 'Não autenticado.' }
       }
 
-      const { error: upsertError } = await supabase
+      const { error: insertError } = await supabase
         .from('weight_logs')
-        .upsert({ user_id: userId, logged_date: date, weight_kg: weightKg }, { onConflict: 'user_id,logged_date' })
+        .insert({ user_id: userId, logged_date: date, weight_kg: weightKg, moment })
 
-      if (upsertError) {
-        return { error: upsertError.message }
+      if (insertError) {
+        return { error: insertError.message }
       }
 
       return { error: null }
@@ -62,7 +73,7 @@ export function WeightLogsProvider({ children }: { children: ReactNode }) {
 
       const { data, error: fetchError } = await supabase
         .from('weight_logs')
-        .select('id, logged_date, weight_kg')
+        .select('id, logged_date, weight_kg, moment, confidence')
         .eq('user_id', userId)
         .gte('logged_date', daysAgoDateString(days))
         .order('logged_date')
@@ -76,9 +87,32 @@ export function WeightLogsProvider({ children }: { children: ReactNode }) {
     [userId]
   )
 
+  const fetchLogsInRange = useCallback(
+    async (startDate: string, endDate: string) => {
+      if (!userId) {
+        return { logs: [], error: 'Não autenticado.' }
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from('weight_logs')
+        .select('id, logged_date, weight_kg, moment, confidence')
+        .eq('user_id', userId)
+        .gte('logged_date', startDate)
+        .lte('logged_date', endDate)
+        .order('logged_date')
+
+      if (fetchError) {
+        return { logs: [], error: fetchError.message }
+      }
+
+      return { logs: (data as WeightLogRow[]).map(fromRow), error: null }
+    },
+    [userId]
+  )
+
   const value = useMemo<WeightLogsContextValue>(
-    () => ({ logWeight, fetchRecentLogs }),
-    [logWeight, fetchRecentLogs]
+    () => ({ logWeight, fetchRecentLogs, fetchLogsInRange }),
+    [logWeight, fetchRecentLogs, fetchLogsInRange]
   )
 
   return <WeightLogsContext.Provider value={value}>{children}</WeightLogsContext.Provider>
