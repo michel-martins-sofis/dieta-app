@@ -3,7 +3,21 @@ import { Dumbbell, Trophy } from 'lucide-react'
 import { useWorkouts, type PersonalRecord, type Workout, type WorkoutSet } from '../contexts/WorkoutsContext'
 import { todayDateString } from '../contexts/FoodEntriesContext'
 
+const WORKOUT_TYPE_LABELS: Record<string, string> = {
+  strength: 'Força',
+  legs: 'Pernas',
+  functional: 'Funcional',
+  back: 'Costas',
+  squat_strength: 'Agachamento',
+  chest_triceps_shoulders: 'Peito, tríceps e ombros',
+  deadlift_shoulders_biceps: 'Terra, ombros e bíceps',
+  upper_and_deadlift: 'Superior e terra',
+}
+
 function formatWorkoutType(type: string): string {
+  const known = WORKOUT_TYPE_LABELS[type.trim().toLowerCase()]
+  if (known) return known
+
   return type
     .split('_')
     .filter(Boolean)

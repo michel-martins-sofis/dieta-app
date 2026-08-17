@@ -51,7 +51,7 @@ describe('WorkoutsPage', () => {
       error: null,
     })
     render(<WorkoutsPage />)
-    expect(await screen.findByText('Strength')).toBeInTheDocument()
+    expect(await screen.findByText('Força')).toBeInTheDocument()
     await userEvent.click(screen.getByText(/ver exercícios/i))
     expect(screen.getByText('agachamento')).toBeInTheDocument()
     expect(screen.getByText(/180 kg/)).toBeInTheDocument()
