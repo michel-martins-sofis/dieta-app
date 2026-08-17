@@ -3,6 +3,14 @@ import { Dumbbell, Trophy } from 'lucide-react'
 import { useWorkouts, type PersonalRecord, type Workout, type WorkoutSet } from '../contexts/WorkoutsContext'
 import { todayDateString } from '../contexts/FoodEntriesContext'
 
+function formatWorkoutType(type: string): string {
+  return type
+    .split('_')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 function formatDateLabel(dateStr: string): string {
   const date = new Date(`${dateStr}T00:00:00`)
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -182,7 +190,7 @@ export function WorkoutsPage() {
               <li key={workout.id} className="entry-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                 <div className="top-bar">
                   <strong>
-                    <Dumbbell size={14} /> {workout.type}
+                    <Dumbbell size={14} /> {formatWorkoutType(workout.type)}
                   </strong>
                   <span className="entry-meta">{formatDateLabel(workout.workoutDate)}</span>
                 </div>
