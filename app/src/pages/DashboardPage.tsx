@@ -22,7 +22,7 @@ export function DashboardPage() {
     }
   }, [fetchDailyWaterTotals])
 
-  const totals = entries.reduce(
+  const rawTotals = entries.reduce(
     (acc, entry) => ({
       caloriesKcal: acc.caloriesKcal + (entry.caloriesKcal ?? 0),
       proteinG: acc.proteinG + (entry.proteinG ?? 0),
@@ -31,6 +31,13 @@ export function DashboardPage() {
     }),
     { caloriesKcal: 0, proteinG: 0, carbG: 0, fatG: 0 }
   )
+
+  const totals = {
+    caloriesKcal: Math.round(rawTotals.caloriesKcal),
+    proteinG: Math.round(rawTotals.proteinG * 10) / 10,
+    carbG: Math.round(rawTotals.carbG * 10) / 10,
+    fatG: Math.round(rawTotals.fatG * 10) / 10,
+  }
 
   function progressPercent(consumed: number, target: number): number {
     if (!target) return 0
